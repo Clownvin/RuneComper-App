@@ -16,7 +16,7 @@ export default function Header() {
   };
 
   return (
-    <header>
+    <header id="header">
       {redirect}
       <nav className="header-nav">
         <div className="search-box">

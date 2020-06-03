@@ -2,10 +2,20 @@ span#username {
   color: #fffb00;
 }
 
+h2#comp-percent {
+  margin-left: 15px;
+  margin-bottom: 30px;
+}
+
 section#requirements {
-  background-color: black;
+  background-image: linear-gradient(black, #444);
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
+  overflow: auto;
+}
+
+a {
+  width: auto;
 }
 
 section.requirement {
@@ -27,6 +37,8 @@ section.requirement {
 }
 
 article.requirement {
+  display: flex;
+  justify-content: center;
   background-color: #666;
   padding: 15px;
   margin-bottom: 15px;
@@ -41,5 +53,9 @@ article.requirement {
 
   &.completed {
     opacity: 50%;
+  }
+
+  > h3 {
+    padding: 0px;
   }
 }

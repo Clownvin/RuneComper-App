@@ -10,7 +10,7 @@ import CompRequirements from './pages/comp-reqs';
 
 function App() {
   return (
-    <div className="App">
+    <div id="app">
       <Header />
       <section id="content">
         {/* <Aside /> */}

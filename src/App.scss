@@ -24,3 +24,13 @@ h5 {
 a {
   color: #fffb00;
 }
+
+#app {
+  display: grid;
+  grid-template-rows: 0px 100vh;
+}
+
+#content {
+  max-height: 100vh;
+  min-height: 100vh;
+}

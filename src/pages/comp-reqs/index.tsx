@@ -3,6 +3,7 @@ import * as superagent from 'superagent';
 import Cookies from 'universal-cookie';
 import './style.scss';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import RequirementCard from '../../components/requirement-card';
 
 const {useEffect, useState} = React;
@@ -44,6 +45,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
   const [quests, setQuests] = useState([] as Requirement[]);
   const [skills, setSkills] = useState([] as Requirement[]);
   const [achievs, setAchievs] = useState([] as Requirement[]);
+  const [completionPercent, setCompletionPercent] = useState(0);
 
   const [profile, setProfile] = useState({} as Profile | null);
 
@@ -132,11 +134,18 @@ export default function Header(props: {match: {params: {user: string}}}) {
       });
       setSkills(skills);
       setQuests(quests);
-      achievs.sort(
-        ({name: a}, {name: b}) =>
-          (profile.achievements[a] ? 1 : 0) - (profile.achievements[b] ? 1 : 0)
-      );
       setAchievs(achievs);
+      setCompletionPercent(
+        ((requirements.length -
+          (skills.length +
+            quests.length +
+            achievs.reduce(
+              (a, {name}) => a + (profile.achievements[name] ? 0 : 1),
+              0
+            ))) /
+          requirements.length) *
+          100
+      );
     })();
   }
 
@@ -149,6 +158,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
       <h1>
         Comp Reqs for: <span id="username">{user}</span>
       </h1>
+      <h2 id="comp-percent">Completion percent: {`${completionPercent}%`}</h2>
       {error ? (
         <h3>{error}</h3>
       ) : (
@@ -186,35 +196,36 @@ export default function Header(props: {match: {params: {user: string}}}) {
             <ul>
               {achievs.map(achiev => (
                 <li key={achiev.name}>
-                  <a
-                    href={`https://runescape.wiki${achiev.page}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <article
+                    className={`requirement ${
+                      achiev.eligible ? 'eligible' : ''
+                    } ${
+                      profile && profile.achievements[achiev.name]
+                        ? 'completed'
+                        : ''
+                    }`}
+                    onClick={() => {
+                      if (!profile) {
+                        return;
+                      }
+                      profile.achievements[achiev.name] = !profile.achievements[
+                        achiev.name
+                      ];
+                      cookies.set(
+                        `achievements-${profile.name}`,
+                        profile.achievements
+                      );
+                      setUpdate(update + 1);
+                    }}
                   >
-                    <article
-                      className={`requirement ${
-                        achiev.eligible ? 'eligible' : ''
-                      } ${
-                        profile && profile.achievements[achiev.name]
-                          ? 'completed'
-                          : ''
-                      }`}
-                      onClick={() => {
-                        if (!profile) {
-                          return;
-                        }
-                        profile.achievements[achiev.name] = !profile
-                          .achievements[achiev.name];
-                        cookies.set(
-                          `achievements-${profile.name}`,
-                          profile.achievements
-                        );
-                        setUpdate(update + 1);
-                      }}
+                    <a
+                      href={`https://runescape.wiki${achiev.page}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
                     >
                       <h3>{achiev.name}</h3>
-                    </article>
-                  </a>
+                    </a>
+                  </article>
                 </li>
               ))}
             </ul>

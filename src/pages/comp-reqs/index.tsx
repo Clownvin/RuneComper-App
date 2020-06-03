@@ -69,12 +69,6 @@ export default function Header(props: {match: {params: {user: string}}}) {
         cookies.set(`achievements-${user}`, achievementUnlocks);
       }
       profile.achievements = achievementUnlocks;
-      let miniquests = cookies.get(`miniquests-${user}`);
-      if (!miniquests) {
-        miniquests = {};
-        cookies.set(`miniquests-${user}`, miniquests);
-      }
-      profile.miniquests = miniquests;
       setProfile(profile);
     })().catch(() => {
       setError('Failed to fetch profile');
@@ -119,9 +113,6 @@ export default function Header(props: {match: {params: {user: string}}}) {
         }
         for (const {name} of requirement.quests) {
           const status = profile.quests[name];
-          if (!status && profile.miniquests[name as string]) {
-            continue;
-          }
           if (status && status.userEligible) {
             continue;
           }

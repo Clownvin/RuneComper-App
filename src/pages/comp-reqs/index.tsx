@@ -3,6 +3,8 @@ import * as superagent from 'superagent';
 import Cookies from 'universal-cookie';
 import './style.scss';
 
+import RequirementCard from '../../components/requirement-card';
+
 const {useEffect, useState} = React;
 
 const cookies = new Cookies();
@@ -154,48 +156,28 @@ export default function Header(props: {match: {params: {user: string}}}) {
           <section id="skills" className="requirement">
             <h2>Skills</h2>
             <ul>
-              {skills.map(skill => (
-                <li key={`${skill.name}${skill.level}`}>
-                  <article
-                    className={`requirement ${
-                      skill.eligible ? 'eligible' : ''
-                    }`}
-                  >
-                    <h3>
-                      {skill.name} {skill.level}
-                    </h3>
-                    <a
-                      href={`https://runescape.wiki${skill.page}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Page
-                    </a>
-                  </article>
-                </li>
+              {skills.map(requirement => (
+                <RequirementCard
+                  key={`${requirement.name}${requirement.level}`}
+                  name={`${requirement.name[0].toUpperCase()}${requirement.name.substring(
+                    1
+                  )} level ${requirement.level}`}
+                  page={requirement.page}
+                  eligible={requirement.eligible}
+                />
               ))}
             </ul>
           </section>
           <section id="quests" className="requirement">
             <h2>Quests</h2>
             <ul>
-              {quests.map(quest => (
-                <li key={quest.name}>
-                  <article
-                    className={`requirement ${
-                      quest.eligible ? 'eligible' : ''
-                    }`}
-                  >
-                    <h3>{quest.name}</h3>
-                    <a
-                      href={`https://runescape.wiki${quest.page}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Page
-                    </a>
-                  </article>
-                </li>
+              {quests.map(requirement => (
+                <RequirementCard
+                  key={requirement.name}
+                  name={requirement.name}
+                  page={requirement.page}
+                  eligible={requirement.eligible}
+                />
               ))}
             </ul>
           </section>
@@ -204,37 +186,35 @@ export default function Header(props: {match: {params: {user: string}}}) {
             <ul>
               {achievs.map(achiev => (
                 <li key={achiev.name}>
-                  <article
-                    className={`requirement ${
-                      achiev.eligible ? 'eligible' : ''
-                    } ${
-                      profile && profile.achievements[achiev.name]
-                        ? 'completed'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      if (!profile) {
-                        return;
-                      }
-                      profile.achievements[achiev.name] = !profile.achievements[
-                        achiev.name
-                      ];
-                      cookies.set(
-                        `achievements-${profile.name}`,
-                        profile.achievements
-                      );
-                      setUpdate(update + 1);
-                    }}
+                  <a
+                    href={`https://runescape.wiki${achiev.page}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <h3>{achiev.name}</h3>
-                    <a
-                      href={`https://runescape.wiki${achiev.page}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                    <article
+                      className={`requirement ${
+                        achiev.eligible ? 'eligible' : ''
+                      } ${
+                        profile && profile.achievements[achiev.name]
+                          ? 'completed'
+                          : ''
+                      }`}
+                      onClick={() => {
+                        if (!profile) {
+                          return;
+                        }
+                        profile.achievements[achiev.name] = !profile
+                          .achievements[achiev.name];
+                        cookies.set(
+                          `achievements-${profile.name}`,
+                          profile.achievements
+                        );
+                        setUpdate(update + 1);
+                      }}
                     >
-                      Page
-                    </a>
-                  </article>
+                      <h3>{achiev.name}</h3>
+                    </article>
+                  </a>
                 </li>
               ))}
             </ul>

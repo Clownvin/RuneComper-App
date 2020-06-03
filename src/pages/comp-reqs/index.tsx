@@ -7,6 +7,8 @@ const {useEffect, useState} = React;
 
 const cookies = new Cookies();
 
+const API_URL = 'https://runecomper.herokuapp.com/';
+
 interface Requirement {
   eligible: boolean;
   name: string;
@@ -45,9 +47,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
 
   function fetchRequirements() {
     (async () => {
-      const {body: requirements} = await superagent.get(
-        'http://localhost:2898/'
-      );
+      const {body: requirements} = await superagent.get(API_URL);
       if (!requirements || !Array.isArray(requirements)) {
         setError("Couldn't get requirements");
         return;
@@ -61,7 +61,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
   function fetchProfile() {
     (async () => {
       setProfile(null);
-      const {body} = await superagent.get(`http://localhost:2898/${user}'`);
+      const {body} = await superagent.get(`${API_URL}${user}`);
       const profile = body as Profile;
       let achievementUnlocks = cookies.get(`achievements-${user}`);
       if (!achievementUnlocks) {

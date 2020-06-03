@@ -3,6 +3,7 @@ span#username {
 }
 
 section#requirements {
+  background-color: black;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
 }
@@ -14,14 +15,14 @@ section.requirement {
     list-style-type: none;
   }
 
-  margin: 15px;
+  margin: 50px 5vw;
 
   &:first-child {
-    margin-left: 30px;
+    margin-left: 5vw;
   }
 
   &:last-child {
-    margin-right: 30px;
+    margin-right: 5vw;
   }
 }
 
@@ -29,4 +30,12 @@ article.requirement {
   background-color: #666;
   padding: 15px;
   margin-bottom: 15px;
+
+  &:first-child {
+    margin-top: 15px;
+  }
+
+  &.eligible {
+    color: #50ff50;
+  }
 }

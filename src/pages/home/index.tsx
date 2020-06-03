@@ -5,7 +5,7 @@ import './style.scss';
 export default function Header() {
   return (
     <section id="home">
-      <h1>Hello</h1>
+      <h1>Welcome to RuneScape</h1>
     </section>
   );
 }

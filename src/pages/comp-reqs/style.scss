@@ -2,6 +2,10 @@ span#username {
   color: #fffb00;
 }
 
+#loading {
+  position: fixed;
+}
+
 h2#comp-percent {
   margin-left: 15px;
   margin-bottom: 30px;
@@ -36,26 +40,48 @@ section.requirement {
   }
 }
 
+#completionist-requirements {
+  display: grid;
+  min-height: 90vh;
+  max-height: 90vh;
+  grid-template-rows: 16% 84%;
+  #info {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
 article.requirement {
   display: flex;
   justify-content: center;
-  background-color: #666;
+  background-color: #222;
   padding: 15px;
   margin-bottom: 15px;
+  height: 10vh;
 
   &:first-child {
     margin-top: 15px;
-  }
-
-  &.eligible {
-    color: #50ff50;
   }
 
   &.completed {
     opacity: 50%;
   }
 
-  > h3 {
-    padding: 0px;
+  a {
+    height: auto;
+    width: auto;
+    margin: auto;
   }
+
+  h3 {
+    margin: auto;
+  }
+}
+
+a.eligible,
+h3.eligible {
+  color: #50ff50;
+  text-shadow: 1px 1px 10px #50ff50;
 }

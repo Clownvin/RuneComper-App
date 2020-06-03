@@ -10,6 +10,7 @@ h1 {
 }
 
 h2 {
+  color: #fffb00;
   font-size: 300%;
 }
 
@@ -26,11 +27,19 @@ a {
 }
 
 #app {
+  min-height: 100vh;
+  max-height: 100vh;
+  max-width: 100vw;
   display: grid;
-  grid-template-rows: 0px 100vh;
+  grid-template-rows: 10vh 90vh;
 }
 
 #content {
-  max-height: 100vh;
-  min-height: 100vh;
+  max-height: 90vh;
+  min-height: 100%;
+}
+
+#page-content {
+  max-height: 90vh;
+  min-height: 100%;
 }

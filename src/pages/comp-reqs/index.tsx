@@ -36,6 +36,16 @@ interface Profile {
   miniquests: {[x: string]: boolean};
 }
 
+const updating = {
+  counter: 0,
+  add() {
+    return ++this.counter;
+  },
+  sub() {
+    return --this.counter;
+  },
+};
+
 export default function Header(props: {match: {params: {user: string}}}) {
   const {user} = props.match.params;
 
@@ -46,6 +56,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
   const [skills, setSkills] = useState([] as Requirement[]);
   const [achievs, setAchievs] = useState([] as Requirement[]);
   const [completionPercent, setCompletionPercent] = useState(0);
+  const [loading, setLoading] = useState(0);
 
   const [profile, setProfile] = useState({} as Profile | null);
 
@@ -53,12 +64,14 @@ export default function Header(props: {match: {params: {user: string}}}) {
 
   function fetchRequirements() {
     (async () => {
+      setLoading(updating.add());
       const {body: requirements} = await superagent.get(API_URL);
       if (!requirements || !Array.isArray(requirements)) {
         setError("Couldn't get requirements");
         return;
       }
       setRequirements(requirements);
+      setLoading(updating.sub());
     })().catch(() => {
       setError('Failed to fetch requirements');
     });
@@ -66,6 +79,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
 
   function fetchProfile() {
     (async () => {
+      setLoading(updating.add());
       setProfile(null);
       const {body} = await superagent.get(`${API_URL}${user}`);
       const profile = body as Profile;
@@ -76,6 +90,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
       }
       profile.achievements = achievementUnlocks;
       setProfile(profile);
+      setLoading(updating.sub());
     })().catch(() => {
       setError('Failed to fetch profile');
     });
@@ -149,16 +164,40 @@ export default function Header(props: {match: {params: {user: string}}}) {
     })();
   }
 
-  useEffect(fetchRequirements, [update]);
-  useEffect(fetchProfile, [user]);
-  useEffect(sortRequirements, [requirements, profile]);
+  useEffect(fetchRequirements, []);
+  useEffect(() => {
+    fetchProfile();
+    setError('');
+  }, [user]);
+  useEffect(sortRequirements, [profile, requirements, update]);
 
-  return (
+  return loading ? (
+    <>
+      <h1 id="loading">Loading...</h1>
+    </>
+  ) : (
     <section id="completionist-requirements">
-      <h1>
-        Comp Reqs for: <span id="username">{user}</span>
-      </h1>
-      <h2 id="comp-percent">Completion percent: {`${completionPercent}%`}</h2>
+      <div id="info">
+        <h1>
+          Comp Reqs for: <span id="username">{user}</span>
+        </h1>
+        <h2 id="comp-percent">
+          Completion percent:{' '}
+          <span
+            style={{
+              color: `${(() => {
+                const g = 255 * completionPercent;
+                const rb = 255 - g;
+                let color = ((rb << 16) | (g << 8)).toString(16);
+                while (color.length < 6) {
+                  color = `0${color}`;
+                }
+                return `#${color}`;
+              })()}`,
+            }}
+          >{`${completionPercent.toFixed(2)}%`}</span>
+        </h2>
+      </div>
       {error ? (
         <h3>{error}</h3>
       ) : (
@@ -174,6 +213,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
                   )} level ${requirement.level}`}
                   page={requirement.page}
                   eligible={requirement.eligible}
+                  priority={requirement.priority}
                 />
               ))}
             </ul>
@@ -187,6 +227,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
                   name={requirement.name}
                   page={requirement.page}
                   eligible={requirement.eligible}
+                  priority={requirement.priority}
                 />
               ))}
             </ul>
@@ -217,11 +258,57 @@ export default function Header(props: {match: {params: {user: string}}}) {
                       );
                       setUpdate(update + 1);
                     }}
+                    style={{
+                      borderWidth: `${Math.max(
+                        Math.log(achiev.priority || 1) * 1.25,
+                        10
+                      )}px`,
+                      borderColor: `${(() => {
+                        const g = Math.max(
+                          Math.min(Math.log(achiev.priority) * 25, 255),
+                          0
+                        );
+                        const rb = 255 - g;
+                        let color = ((rb << 16) | (g << 8)).toString(16);
+                        while (color.length < 6) {
+                          color = `0${color}`;
+                        }
+                        return `#${color}`;
+                      })()}`,
+                      borderStyle: 'solid',
+                      boxShadow: `0 0 50px ${(() => {
+                        const g = Math.max(
+                          Math.min(Math.log(achiev.priority) * 25, 255),
+                          0
+                        );
+                        const rb = 255 - g;
+                        let color = ((rb << 16) | (g << 8)).toString(16);
+                        while (color.length < 6) {
+                          color = `0${color}`;
+                        }
+                        return `#${color}`;
+                      })()}`,
+                    }}
                   >
                     <a
+                      className={`requirement ${
+                        achiev.eligible ? 'eligible' : ''
+                      }`}
                       href={`https://runescape.wiki${achiev.page}`}
                       target="_blank"
                       rel="noopener noreferrer"
+                      onClick={() => {
+                        if (!profile) {
+                          return;
+                        }
+                        profile.achievements[achiev.name] = !profile
+                          .achievements[achiev.name];
+                        cookies.set(
+                          `achievements-${profile.name}`,
+                          profile.achievements
+                        );
+                        setUpdate(update + 1);
+                      }}
                     >
                       <h3>{achiev.name}</h3>
                     </a>

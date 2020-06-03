@@ -19,6 +19,7 @@ interface Requirement {
   skills: Requirement[];
   quests: Requirement[];
   achievements: Requirement[];
+  maximumLevelRequirement: number;
 }
 
 interface Profile {
@@ -35,6 +36,7 @@ interface Profile {
 export default function Header(props: {match: {params: {user: string}}}) {
   const {user} = props.match.params;
 
+  const [update, setUpdate] = useState(0);
   const [requirements, setRequirements] = useState([] as Requirement[]);
 
   const [quests, setQuests] = useState([] as Requirement[]);
@@ -128,11 +130,15 @@ export default function Header(props: {match: {params: {user: string}}}) {
       });
       setSkills(skills);
       setQuests(quests);
+      achievs.sort(
+        ({name: a}, {name: b}) =>
+          (profile.achievements[a] ? 1 : 0) - (profile.achievements[b] ? 1 : 0)
+      );
       setAchievs(achievs);
     })();
   }
 
-  useEffect(fetchRequirements, []);
+  useEffect(fetchRequirements, [update]);
   useEffect(fetchProfile, [user]);
   useEffect(sortRequirements, [requirements, profile]);
 
@@ -201,7 +207,24 @@ export default function Header(props: {match: {params: {user: string}}}) {
                   <article
                     className={`requirement ${
                       achiev.eligible ? 'eligible' : ''
+                    } ${
+                      profile && profile.achievements[achiev.name]
+                        ? 'completed'
+                        : ''
                     }`}
+                    onClick={() => {
+                      if (!profile) {
+                        return;
+                      }
+                      profile.achievements[achiev.name] = !profile.achievements[
+                        achiev.name
+                      ];
+                      cookies.set(
+                        `achievements-${profile.name}`,
+                        profile.achievements
+                      );
+                      setUpdate(update + 1);
+                    }}
                   >
                     <h3>{achiev.name}</h3>
                     <a

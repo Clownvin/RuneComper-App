@@ -38,4 +38,8 @@ article.requirement {
   &.eligible {
     color: #50ff50;
   }
+
+  &.completed {
+    opacity: 50%;
+  }
 }

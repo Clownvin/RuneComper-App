@@ -53,7 +53,9 @@ export default function Header(props: {match: {params: {user: string}}}) {
         return;
       }
       setRequirements(requirements);
-    })();
+    })().catch(() => {
+      setError('Failed to fetch requirements');
+    });
   }
 
   function fetchProfile() {
@@ -74,7 +76,9 @@ export default function Header(props: {match: {params: {user: string}}}) {
       }
       profile.miniquests = miniquests;
       setProfile(profile);
-    })();
+    })().catch(() => {
+      setError('Failed to fetch profile');
+    });
   }
 
   function sortRequirements() {
@@ -147,7 +151,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
         Comp Reqs for: <span id="username">{user}</span>
       </h1>
       {error ? (
-        error
+        <h3>{error}</h3>
       ) : (
         <section id="requirements">
           <section id="skills" className="requirement">
@@ -166,6 +170,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
                     <a
                       href={`https://runescape.wiki${skill.page}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       Page
                     </a>
@@ -188,6 +193,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
                     <a
                       href={`https://runescape.wiki${quest.page}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       Page
                     </a>
@@ -210,6 +216,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
                     <a
                       href={`https://runescape.wiki${achiev.page}`}
                       target="_blank"
+                      rel="noopener noreferrer"
                     >
                       Page
                     </a>

@@ -202,6 +202,20 @@ export default function Header(props: {match: {params: {user: string}}}) {
         <h3>{error}</h3>
       ) : (
         <section id="requirements">
+          <section id="quests" className="requirement">
+            <h2>Quests</h2>
+            <ul>
+              {quests.map(requirement => (
+                <RequirementCard
+                  key={requirement.name}
+                  name={requirement.name}
+                  page={requirement.page}
+                  eligible={requirement.eligible}
+                  priority={requirement.priority}
+                />
+              ))}
+            </ul>
+          </section>
           <section id="skills" className="requirement">
             <h2>Skills</h2>
             <ul>
@@ -218,25 +232,20 @@ export default function Header(props: {match: {params: {user: string}}}) {
               ))}
             </ul>
           </section>
-          <section id="quests" className="requirement">
-            <h2>Quests</h2>
-            <ul>
-              {quests.map(requirement => (
-                <RequirementCard
-                  key={requirement.name}
-                  name={requirement.name}
-                  page={requirement.page}
-                  eligible={requirement.eligible}
-                  priority={requirement.priority}
-                />
-              ))}
-            </ul>
-          </section>
           <section id="achievements" className="requirement">
             <h2>Achievements</h2>
             <ul>
               {achievs.map(achiev => (
-                <li key={achiev.name}>
+                <li
+                  key={achiev.name}
+                  className={`requirement ${
+                    achiev.eligible ? 'eligible' : ''
+                  } ${
+                    profile && profile.achievements[achiev.name]
+                      ? 'completed'
+                      : ''
+                  }`}
+                >
                   <article
                     className={`requirement ${
                       achiev.eligible ? 'eligible' : ''

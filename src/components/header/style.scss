@@ -1,21 +1,39 @@
 nav.header-nav {
   height: 0px;
-  display: flex;
-  flex-direction: row-reverse;
+  text-align: center;
 }
 
 form.search-form {
   margin: 10px;
-  margin-right: 15px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 90vw;
 
   > input {
-    height: 4vh;
+    height: 5vh;
     font-size: 150%;
   }
 
   input[type='button'] {
     margin-left: 5px;
     border: none;
-    width: 96px;
+    width: 10vw;
+  }
+}
+
+@media screen and (max-width: 450px) {
+  form.search-form {
+    margin: 0;
+    flex-direction: column;
+    width: 95vw;
+    flex-wrap: wrap;
+    margin: 2.5vw;
+
+    input,
+    input[type='button'] {
+      margin-left: 0;
+      width: auto;
+    }
   }
 }

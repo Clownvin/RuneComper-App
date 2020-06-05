@@ -6,30 +6,47 @@ import './style.scss';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import RequirementCard from '../../components/requirement-card';
 
+import {Mixer, RGB} from '../../color-mixer';
+
+const priorityColorMixer = new Mixer(
+  [
+    [99, 0, 99],
+    [255, 0, 0],
+    [255, 255, 0],
+    [0, 255, 0],
+    [0, 255, 255],
+    [255, 255, 255],
+  ].reverse() as RGB[]
+);
+
 const {useEffect, useState} = React;
 
 const cookies = new Cookies();
 
-const API_URL = 'https://runecomper.herokuapp.com/';
+const API_URL = 'http://localhost:2898/'; //'https://runecomper.herokuapp.com/';
 
-interface Requirement {
+export interface Requirement {
+  complete: boolean;
   eligible: boolean;
   name: string;
   page: string;
   level?: number;
   type: string;
   priority: number;
+  order: number;
   skills: Requirement[];
   quests: Requirement[];
   achievements: Requirement[];
   maximumLevelRequirement: number;
 }
 
-interface Profile {
+export interface Profile {
   name: string;
   totallevel: number;
   totalxp: number;
   loggedIn: boolean;
+  minOrder: number;
+  maxOrder: number;
   skills: {[x: string]: {level: number; xp: number}};
   quests: {[x: string]: {completed: boolean; userEligible: boolean}};
   achievements: {[x: string]: boolean};
@@ -111,9 +128,12 @@ export default function Header(props: {match: {params: {user: string}}}) {
         const {name, level, type} = requirement;
         if (
           (level && profile.skills[name].level >= level) ||
-          (profile.quests[name] && profile.quests[name].completed)
+          (profile.quests[name] && profile.quests[name].completed) ||
+          profile.achievements[name]
         ) {
-          return;
+          requirement.complete = true;
+        } else {
+          requirement.complete = false;
         }
         switch (type) {
           case 'quest':
@@ -124,6 +144,18 @@ export default function Header(props: {match: {params: {user: string}}}) {
             break;
           case 'skill':
             skills.push(requirement);
+        }
+        if (
+          profile.minOrder === undefined ||
+          profile.minOrder > requirement.order
+        ) {
+          profile.minOrder = requirement.order;
+        }
+        if (
+          profile.maxOrder === undefined ||
+          profile.maxOrder < requirement.order
+        ) {
+          profile.maxOrder = requirement.order;
         }
         requirement.eligible = false;
         for (const {name, level} of requirement.skills) {
@@ -151,13 +183,10 @@ export default function Header(props: {match: {params: {user: string}}}) {
       setQuests(quests);
       setAchievs(achievs);
       setCompletionPercent(
-        ((requirements.length -
-          (skills.length +
-            quests.length +
-            achievs.reduce(
-              (a, {name}) => a + (profile.achievements[name] ? 0 : 1),
-              0
-            ))) /
+        (requirements.reduce(
+          (total, req) => total + (req.complete ? 1 : 0),
+          0
+        ) /
           requirements.length) *
           100
       );
@@ -171,7 +200,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
   }, [user]);
   useEffect(sortRequirements, [profile, requirements, update]);
 
-  return loading ? (
+  return loading && !error ? (
     <>
       <h1 id="loading">Loading...</h1>
     </>
@@ -198,8 +227,8 @@ export default function Header(props: {match: {params: {user: string}}}) {
           >{`${completionPercent.toFixed(2)}%`}</span>
         </h2>
       </div>
-      {error ? (
-        <h3>{error}</h3>
+      {error || !profile ? (
+        <h3>{error || 'No profile..'}</h3>
       ) : (
         <section id="requirements">
           <section id="quests" className="requirement">
@@ -208,10 +237,14 @@ export default function Header(props: {match: {params: {user: string}}}) {
               {quests.map(requirement => (
                 <RequirementCard
                   key={requirement.name}
-                  name={requirement.name}
-                  page={requirement.page}
-                  eligible={requirement.eligible}
-                  priority={requirement.priority}
+                  requirement={requirement}
+                  profile={profile}
+                  updateProfile={() => {
+                    console.log('WTF');
+                    cookies.set(`achievements-${user}`, profile?.achievements);
+                    setUpdate(update + 1);
+                  }}
+                  mixer={priorityColorMixer}
                 />
               ))}
             </ul>
@@ -222,12 +255,14 @@ export default function Header(props: {match: {params: {user: string}}}) {
               {skills.map(requirement => (
                 <RequirementCard
                   key={`${requirement.name}${requirement.level}`}
-                  name={`${requirement.name[0].toUpperCase()}${requirement.name.substring(
-                    1
-                  )} level ${requirement.level}`}
-                  page={requirement.page}
-                  eligible={requirement.eligible}
-                  priority={requirement.priority}
+                  requirement={requirement}
+                  profile={profile}
+                  updateProfile={() => {
+                    console.log('WTF');
+                    cookies.set(`achievements-${user}`, profile?.achievements);
+                    setUpdate(update + 1);
+                  }}
+                  mixer={priorityColorMixer}
                 />
               ))}
             </ul>
@@ -235,94 +270,17 @@ export default function Header(props: {match: {params: {user: string}}}) {
           <section id="achievements" className="requirement">
             <h2>Achievements</h2>
             <ul>
-              {achievs.map(achiev => (
-                <li
-                  key={achiev.name}
-                  className={`requirement ${
-                    achiev.eligible ? 'eligible' : ''
-                  } ${
-                    profile && profile.achievements[achiev.name]
-                      ? 'completed'
-                      : ''
-                  }`}
-                >
-                  <article
-                    className={`requirement ${
-                      achiev.eligible ? 'eligible' : ''
-                    } ${
-                      profile && profile.achievements[achiev.name]
-                        ? 'completed'
-                        : ''
-                    }`}
-                    onClick={() => {
-                      if (!profile) {
-                        return;
-                      }
-                      profile.achievements[achiev.name] = !profile.achievements[
-                        achiev.name
-                      ];
-                      cookies.set(
-                        `achievements-${profile.name}`,
-                        profile.achievements
-                      );
-                      setUpdate(update + 1);
-                    }}
-                    style={{
-                      borderWidth: `${Math.max(
-                        Math.log(achiev.priority || 1) * 1.25,
-                        10
-                      )}px`,
-                      borderColor: `${(() => {
-                        const g = Math.max(
-                          Math.min(Math.log(achiev.priority) * 25, 255),
-                          0
-                        );
-                        const rb = 255 - g;
-                        let color = ((rb << 16) | (g << 8)).toString(16);
-                        while (color.length < 6) {
-                          color = `0${color}`;
-                        }
-                        return `#${color}`;
-                      })()}`,
-                      borderStyle: 'solid',
-                      boxShadow: `0 0 50px ${(() => {
-                        const g = Math.max(
-                          Math.min(Math.log(achiev.priority) * 25, 255),
-                          0
-                        );
-                        const rb = 255 - g;
-                        let color = ((rb << 16) | (g << 8)).toString(16);
-                        while (color.length < 6) {
-                          color = `0${color}`;
-                        }
-                        return `#${color}`;
-                      })()}`,
-                    }}
-                  >
-                    <a
-                      className={`requirement ${
-                        achiev.eligible ? 'eligible' : ''
-                      }`}
-                      href={`https://runescape.wiki${achiev.page}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => {
-                        if (!profile) {
-                          return;
-                        }
-                        profile.achievements[achiev.name] = !profile
-                          .achievements[achiev.name];
-                        cookies.set(
-                          `achievements-${profile.name}`,
-                          profile.achievements
-                        );
-                        setUpdate(update + 1);
-                      }}
-                    >
-                      <h3>{achiev.name}</h3>
-                    </a>
-                  </article>
-                </li>
+              {achievs.map(requirement => (
+                <RequirementCard
+                  key={`${requirement.name}${requirement.level}`}
+                  requirement={requirement}
+                  profile={profile}
+                  updateProfile={() => {
+                    cookies.set(`achievements-${user}`, profile?.achievements);
+                    setUpdate(update + 1);
+                  }}
+                  mixer={priorityColorMixer}
+                />
               ))}
             </ul>
           </section>

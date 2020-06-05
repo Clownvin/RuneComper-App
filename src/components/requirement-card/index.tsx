@@ -26,7 +26,7 @@ export default function RequirementCard({
   const [update, setUpdate] = useState(0);
 
   const percent = calculatePercent(
-    requirement.order,
+    Math.max(requirement.order, profile.minOrder),
     profile.minOrder,
     profile.maxOrder
   );

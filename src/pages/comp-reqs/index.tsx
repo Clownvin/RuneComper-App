@@ -6,18 +6,13 @@ import './style.scss';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import RequirementCard from '../../components/requirement-card';
 
-import {Mixer, RGB} from '../../color-mixer';
+import {Mixer} from '../../color-mixer';
 
-const priorityColorMixer = new Mixer(
-  [
-    [99, 0, 99],
-    [255, 0, 0],
-    [255, 255, 0],
-    [0, 255, 0],
-    [0, 255, 255],
-    [255, 255, 255],
-  ].reverse() as RGB[]
-);
+const priorityColorMixer = new Mixer([
+  [0, 255, 0],
+  [255, 255, 0],
+  [255, 0, 0],
+]);
 
 const {useEffect, useState} = React;
 
@@ -133,6 +128,18 @@ export default function Header(props: {match: {params: {user: string}}}) {
         ) {
           requirement.complete = true;
         } else {
+          if (
+            profile.minOrder === undefined ||
+            profile.minOrder > requirement.order
+          ) {
+            profile.minOrder = requirement.order;
+          }
+          if (
+            profile.maxOrder === undefined ||
+            profile.maxOrder < requirement.order
+          ) {
+            profile.maxOrder = requirement.order;
+          }
           requirement.complete = false;
         }
         switch (type) {
@@ -144,18 +151,6 @@ export default function Header(props: {match: {params: {user: string}}}) {
             break;
           case 'skill':
             skills.push(requirement);
-        }
-        if (
-          profile.minOrder === undefined ||
-          profile.minOrder > requirement.order
-        ) {
-          profile.minOrder = requirement.order;
-        }
-        if (
-          profile.maxOrder === undefined ||
-          profile.maxOrder < requirement.order
-        ) {
-          profile.maxOrder = requirement.order;
         }
         requirement.eligible = false;
         for (const {name, level} of requirement.skills) {

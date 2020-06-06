@@ -18,7 +18,7 @@ const {useEffect, useState} = React;
 
 const cookies = new Cookies();
 
-const API_URL = 'http://localhost:2898/'; //'https://runecomper.herokuapp.com/';
+const API_URL = 'https://runecomper.herokuapp.com/';
 
 export interface Requirement {
   complete: boolean;

@@ -16,11 +16,11 @@ a {
 }
 
 #completionist-requirements {
-  $requirement-height: 90vh;
+  $requirement-height: 100vh;
   display: grid;
   min-height: $requirement-height;
   max-height: $requirement-height;
-  grid-template-rows: 20vh 70vh;
+  grid-template-rows: 15vh 85vh;
   overflow: hidden;
   #info {
     text-align: center;

@@ -4,6 +4,8 @@ import * as React from 'react';
 import './style.scss';
 import {Requirement, Profile} from '../../pages/comp-reqs';
 import {Mixer} from '../../color-mixer';
+// import { queryByTestId } from '@testing-library/react';
+// import { queryByTestId } from '@testing-library/react';
 
 const {useState} = React;
 
@@ -16,9 +18,13 @@ export default function RequirementCard({
   updateProfile,
   mixer,
   requirement,
+  selected,
+  setSelected,
 }: {
   profile: Profile;
   updateProfile: () => void;
+  selected: boolean;
+  setSelected: (req: Requirement) => void;
   mixer: Mixer;
   requirement: Requirement;
 }) {
@@ -67,28 +73,71 @@ export default function RequirementCard({
           </h3>
         </header>
         {/* <p>{JSON.stringify(requirement, null, 2)}</p> */}
-        <section className="info">
-          <a
-            className="requirement"
-            href={`https://runescape.wiki${page}`}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            RuneScape Wiki
-          </a>
-          <input
-            type="checkbox"
-            checked={requirement.complete}
-            onClick={_ => {
-              requirement.complete = !requirement.complete;
-              if (requirement.type === 'achievement') {
-                profile.achievements[name] = !profile.achievements[name];
-                updateProfile();
-              }
-              setUpdate(update + 1);
-            }}
-          ></input>
+        <section className="info" id={`${name}${level ?? ''}`}>
+          <div>
+            <a
+              className="requirement"
+              href={`https://runescape.wiki${page}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              RuneScape Wiki
+            </a>
+            <input
+              type="checkbox"
+              checked={requirement.complete}
+              onClick={_ => {
+                requirement.complete = !requirement.complete;
+                if (requirement.type === 'achievement') {
+                  profile.achievements[name] = !profile.achievements[name];
+                  updateProfile();
+                }
+                setUpdate(update + 1);
+              }}
+            ></input>
+          </div>
+          <p>
+            M: {requirement.maximumLevelRequirement || 0}, P:{' '}
+            {requirement.priority}, O: {requirement.order}
+          </p>
+          <section>
+            Quests
+            {requirement.quests
+              .filter(q => q.required)
+              .map(quest => (
+                <a href={`#${quest.name}`}>
+                  {quest.name},{' '}
+                  {(profile.quests[quest.name] ?? {completed: false}).completed
+                    ? '✅'
+                    : '❌'}
+                </a>
+              ))}
+          </section>
+          <section>
+            Skills
+            {requirement.skills.map(skill => (
+              <div>
+                {skill.name} {skill.level},{' '}
+                {profile.skills[skill.name].level >= (skill.level ?? 0)
+                  ? '✅'
+                  : '❌'}
+              </div>
+            ))}
+          </section>
+          <section>
+            Achievements
+            {requirement.achievements.map(achiev => (
+              <div>
+                {achiev.name}, {profile.achievements[achiev.name] ? '✅' : '❌'}
+              </div>
+            ))}
+          </section>
         </section>
+        {requirement.type !== 'skill' ? (
+          <button disabled={selected} onClick={() => setSelected(requirement)}>
+            Set Selected
+          </button>
+        ) : undefined}
       </article>
     </li>
   );

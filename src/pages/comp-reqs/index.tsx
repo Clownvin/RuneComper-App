@@ -7,6 +7,7 @@ import './style.scss';
 import RequirementCard from '../../components/requirement-card';
 
 import {Mixer} from '../../color-mixer';
+import {Dictionary, keyBy} from 'lodash';
 
 const priorityColorMixer = new Mixer([
   [0, 255, 0],
@@ -18,15 +19,18 @@ const {useEffect, useState} = React;
 
 const cookies = new Cookies();
 
-const API_URL = 'https://runecomper.herokuapp.com/';
+const API_URL = 'http://localhost:2898/';
+
+type RequirementType = 'quest' | 'skill' | 'achievement';
 
 export interface Requirement {
+  required?: boolean;
   complete: boolean;
   eligible: boolean;
   name: string;
   page: string;
   level?: number;
-  type: string;
+  type: RequirementType;
   priority: number;
   order: number;
   skills: Requirement[];
@@ -60,6 +64,10 @@ const updating = {
 
 export default function Header(props: {match: {params: {user: string}}}) {
   const {user} = props.match.params;
+  const [selectedRequirement, setSelectedRequirement] = useState<
+    Requirement | undefined
+  >(undefined);
+  console.log('SelectedRequiement', selectedRequirement);
 
   const [update, setUpdate] = useState(0);
   const [requirements, setRequirements] = useState([] as Requirement[]);
@@ -77,6 +85,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
   function fetchRequirements() {
     (async () => {
       setLoading(updating.add());
+      console.log('GETTING', API_URL);
       const {body: requirements} = await superagent.get(API_URL);
       if (!requirements || !Array.isArray(requirements)) {
         setError("Couldn't get requirements");
@@ -100,6 +109,21 @@ export default function Header(props: {match: {params: {user: string}}}) {
         achievementUnlocks = {};
         cookies.set(`achievements-${user}`, achievementUnlocks);
       }
+      // let questUnlocks = cookies.get(`quests-${user}`);
+      // if (questUnlocks) {
+      //   console.log('Got quest unlcoks', questUnlocks);
+      //   for (const name in questUnlocks) {
+      //     const quest = profile.quests[name];
+      //     if (quest) {
+      //       quest.completed = questUnlocks[name].completed;
+      //     } else {
+      //       profile.quests[name] = questUnlocks[name];
+      //     }
+      //   }
+      // } else {
+      //   console.log('NO QUESTS')
+      //   cookies.set(`quests-${user}`, {})
+      // }
       profile.achievements = achievementUnlocks;
       setProfile(profile);
       setLoading(updating.sub());
@@ -108,10 +132,35 @@ export default function Header(props: {match: {params: {user: string}}}) {
     });
   }
 
+  function traverseSelected(
+    reqMap: Dictionary<Requirement>,
+    requirement = selectedRequirement as Requirement,
+    seen = new Set<Requirement>()
+  ) {
+    seen.add(requirement);
+    for (const {name, type, level} of [
+      ...(requirement.achievements ?? []),
+      ...(requirement.quests ?? []).filter(q => q.required),
+      ...(requirement.skills ?? []),
+    ]) {
+      const n = type === 'skill' ? `${name}${level}` : name;
+      const req = reqMap[n];
+      if (!req) {
+        console.warn('NO REQ FOR', n);
+      }
+      if (seen.has(req)) {
+        continue;
+      }
+      traverseSelected(reqMap, req, seen);
+    }
+    return seen;
+  }
+
   function sortRequirements() {
     if (!requirements) {
       return;
     }
+    console.log(profile ?? '');
     (async () => {
       if (!profile) {
         return;
@@ -119,11 +168,22 @@ export default function Header(props: {match: {params: {user: string}}}) {
       const skills = [] as Requirement[];
       const quests = [] as Requirement[];
       const achievs = [] as Requirement[];
-      requirements.forEach(requirement => {
+      let reqs = requirements.slice();
+      if (selectedRequirement) {
+        const reqMap = keyBy(requirements, r =>
+          r.type === 'skill' ? `${r.name}${r.level}` : r.name
+        );
+        const allowed = traverseSelected(reqMap);
+        console.log('Allowed:', allowed);
+        reqs = reqs.filter(req => allowed.has(req));
+      }
+      reqs.forEach(requirement => {
         const {name, level, type} = requirement;
         if (
           (level && profile.skills[name].level >= level) ||
           (profile.quests[name] && profile.quests[name].completed) ||
+          (profile.quests[`${name} (miniquest)`] &&
+            profile.quests[`${name} (miniquest)`].completed) ||
           profile.achievements[name]
         ) {
           requirement.complete = true;
@@ -193,7 +253,12 @@ export default function Header(props: {match: {params: {user: string}}}) {
     fetchProfile();
     setError('');
   }, [user]);
-  useEffect(sortRequirements, [profile, requirements, update]);
+  useEffect(sortRequirements, [
+    profile,
+    requirements,
+    update,
+    selectedRequirement,
+  ]);
 
   return loading && !error ? (
     <>
@@ -202,10 +267,10 @@ export default function Header(props: {match: {params: {user: string}}}) {
   ) : (
     <section id="completionist-requirements">
       <div id="info">
-        <h1>
+        <h2>
           Comp Reqs for: <span id="username">{user}</span>
-        </h1>
-        <h2 id="comp-percent">
+        </h2>
+        <h3 id="comp-percent">
           Completion percent:{' '}
           <span
             style={{
@@ -220,7 +285,13 @@ export default function Header(props: {match: {params: {user: string}}}) {
               })()}`,
             }}
           >{`${completionPercent.toFixed(2)}%`}</span>
-        </h2>
+        </h3>
+        <button
+          // disabled={!selectedRequirement}
+          onClick={() => setSelectedRequirement(undefined)}
+        >
+          Unselect {selectedRequirement?.name}
+        </button>
       </div>
       {error || !profile ? (
         <h3>{error || 'No profile..'}</h3>
@@ -233,10 +304,14 @@ export default function Header(props: {match: {params: {user: string}}}) {
                 <RequirementCard
                   key={requirement.name}
                   requirement={requirement}
+                  selected={requirement.name === selectedRequirement?.name}
+                  setSelected={setSelectedRequirement}
                   profile={profile}
                   updateProfile={() => {
                     console.log('WTF');
                     cookies.set(`achievements-${user}`, profile?.achievements);
+                    // console.log('Saving cookie?', profile.quests)
+                    // cookies.set(`quests-${user}`, profile?.quests);
                     setUpdate(update + 1);
                   }}
                   mixer={priorityColorMixer}
@@ -251,10 +326,14 @@ export default function Header(props: {match: {params: {user: string}}}) {
                 <RequirementCard
                   key={`${requirement.name}${requirement.level}`}
                   requirement={requirement}
+                  selected={requirement.name === selectedRequirement?.name}
+                  setSelected={setSelectedRequirement}
                   profile={profile}
                   updateProfile={() => {
                     console.log('WTF');
                     cookies.set(`achievements-${user}`, profile?.achievements);
+                    // console.log('Saving cookie?', profile.quests);
+                    // cookies.set(`quests-${user}`, profile?.quests);
                     setUpdate(update + 1);
                   }}
                   mixer={priorityColorMixer}
@@ -269,9 +348,12 @@ export default function Header(props: {match: {params: {user: string}}}) {
                 <RequirementCard
                   key={`${requirement.name}${requirement.level}`}
                   requirement={requirement}
+                  selected={requirement.name === selectedRequirement?.name}
+                  setSelected={setSelectedRequirement}
                   profile={profile}
                   updateProfile={() => {
                     cookies.set(`achievements-${user}`, profile?.achievements);
+                    // cookies.set(`quests-${user}`, profile?.quests);
                     setUpdate(update + 1);
                   }}
                   mixer={priorityColorMixer}

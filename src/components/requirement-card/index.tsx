@@ -107,7 +107,12 @@ export default function RequirementCard({
               .map(quest => (
                 <a href={`#${quest.name}`}>
                   {quest.name},{' '}
-                  {(profile.quests[quest.name] ?? {completed: false}).completed
+                  {(
+                    profile.quests[quest.name] ??
+                    profile.quests[`${quest.name} (miniquest)`] ?? {
+                      completed: false,
+                    }
+                  ).completed
                     ? '✅'
                     : '❌'}
                 </a>

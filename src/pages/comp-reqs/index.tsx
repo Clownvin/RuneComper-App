@@ -169,10 +169,10 @@ export default function Header(props: {match: {params: {user: string}}}) {
       const quests = [] as Requirement[];
       const achievs = [] as Requirement[];
       let reqs = requirements.slice();
+      const reqMap = keyBy(requirements, r =>
+        r.type === 'skill' ? `${r.name}${r.level}` : r.name
+      );
       if (selectedRequirement) {
-        const reqMap = keyBy(requirements, r =>
-          r.type === 'skill' ? `${r.name}${r.level}` : r.name
-        );
         const allowed = traverseSelected(reqMap);
         console.log('Allowed:', allowed);
         reqs = reqs.filter(req => allowed.has(req));
@@ -219,7 +219,9 @@ export default function Header(props: {match: {params: {user: string}}}) {
           }
           return;
         }
-        for (const {name} of requirement.quests) {
+        for (const {name} of requirement.quests.filter(
+          q => reqMap[q.name].required
+        )) {
           const status = profile.quests[name];
           if (status && status.userEligible) {
             continue;

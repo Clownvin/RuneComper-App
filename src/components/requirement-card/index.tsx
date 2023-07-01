@@ -77,7 +77,7 @@ export default function RequirementCard({
           <div>
             <a
               className="requirement"
-              href={`https://runescape.wiki${page}`}
+              href={`${page}`}
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -97,13 +97,12 @@ export default function RequirementCard({
             ></input>
           </div>
           <p>
-            M: {requirement.maximumLevelRequirement || 0}, P:{' '}
-            {requirement.priority}, O: {requirement.order}
+            M: {requirement.maxLevel || 0}, O: {requirement.order}
           </p>
           <section>
             Quests
             {requirement.quests
-              .filter(q => q.required)
+              // .filter(q => q.required)
               .map(quest => (
                 <a href={`#${quest.name}`}>
                   {quest.name},{' '}
@@ -123,7 +122,7 @@ export default function RequirementCard({
             {requirement.skills.map(skill => (
               <div>
                 {skill.name} {skill.level},{' '}
-                {profile.skills[skill.name].level >= (skill.level ?? 0)
+                {(profile.skills[skill.name]?.level || 0) >= (skill.level ?? 0)
                   ? '✅'
                   : '❌'}
               </div>

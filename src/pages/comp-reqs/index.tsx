@@ -31,12 +31,12 @@ export interface Requirement {
   page: string;
   level?: number;
   type: RequirementType;
-  priority: number;
+  // priority: number;
   order: number;
   skills: Requirement[];
   quests: Requirement[];
   achievements: Requirement[];
-  maximumLevelRequirement: number;
+  maxLevel: number;
 }
 
 export interface Profile {
@@ -46,10 +46,12 @@ export interface Profile {
   loggedIn: boolean;
   minOrder: number;
   maxOrder: number;
-  skills: {[x: string]: {level: number; xp: number}};
-  quests: {[x: string]: {completed: boolean; userEligible: boolean}};
-  achievements: {[x: string]: boolean};
-  miniquests: {[x: string]: boolean};
+  skills: {[x: string]: {level: number; xp: number} | undefined};
+  quests: {
+    [x: string]: {completed: boolean; userEligible: boolean} | undefined;
+  };
+  achievements: {[x: string]: boolean | undefined};
+  miniquests: {[x: string]: boolean | undefined};
 }
 
 const updating = {
@@ -91,7 +93,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
         setError("Couldn't get requirements");
         return;
       }
-      setRequirements(requirements);
+      setRequirements(requirements.map((r, i) => ({...r, order: i})));
       setLoading(updating.sub());
     })().catch(() => {
       setError('Failed to fetch requirements');
@@ -140,7 +142,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
     seen.add(requirement);
     for (const {name, type, level} of [
       ...(requirement.achievements ?? []),
-      ...(requirement.quests ?? []).filter(q => q.required),
+      ...(requirement.quests ?? []), //.filter(q => q.required),
       ...(requirement.skills ?? []),
     ]) {
       const n = type === 'skill' ? `${name}${level}` : name;
@@ -180,10 +182,10 @@ export default function Header(props: {match: {params: {user: string}}}) {
       reqs.forEach(requirement => {
         const {name, level, type} = requirement;
         if (
-          (level && profile.skills[name].level >= level) ||
-          (profile.quests[name] && profile.quests[name].completed) ||
+          (level && (profile.skills[name]?.level || 0) >= level) ||
+          (profile.quests[name] && profile.quests[name]?.completed) ||
           (profile.quests[`${name} (miniquest)`] &&
-            profile.quests[`${name} (miniquest)`].completed) ||
+            profile.quests[`${name} (miniquest)`]?.completed) ||
           profile.achievements[name]
         ) {
           requirement.complete = true;
@@ -214,13 +216,13 @@ export default function Header(props: {match: {params: {user: string}}}) {
         }
         requirement.eligible = false;
         for (const {name, level} of requirement.skills) {
-          if (profile.skills[name].level >= (level || 0)) {
+          if ((profile.skills[name]?.level || 0) >= (level || 0)) {
             continue;
           }
           return;
         }
         for (const {name} of requirement.quests.filter(
-          q => reqMap[q.name].required
+          q => reqMap[q.name] //.required
         )) {
           const status = profile.quests[name];
           if (status && status.userEligible) {

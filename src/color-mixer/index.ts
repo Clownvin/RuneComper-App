@@ -56,7 +56,7 @@ export class Mixer {
    * @param phase a number between 0 and 1, representing percent phase
    */
   getRGB(phase: number): RGB {
-    if (phase > 1 || phase < 0) {
+    if (phase > 1 || phase < 0 || Number.isNaN(phase)) {
       throw new Error('phase must be between 0 and 1, given: ' + phase);
     }
     const phasePeriod = phase / this.period;

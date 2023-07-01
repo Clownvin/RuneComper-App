@@ -7,7 +7,7 @@ import {Redirect} from 'react-router-dom';
 
 export default function Header() {
   const [user, setUser] = useState('');
-  const [redirect, setRedirect] = useState((null as unknown) as JSX.Element);
+  const [redirect, setRedirect] = useState(null as unknown as JSX.Element);
 
   const go = (e: FormEvent | MouseEvent) => {
     e.preventDefault();

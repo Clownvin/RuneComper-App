@@ -38,6 +38,13 @@ section#requirements {
   max-height: 90vh;
 }
 
+@media screen and (max-width: 1000px) {
+  section#requirements {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
 section.requirement {
   text-align: center;
 
@@ -55,13 +62,13 @@ section.requirement {
     }
   }
 
-  margin: 50px 5vw 0 5vw;
+  margin: 1vmin 1vmin 0 1vmin;
 
-  &:first-child {
-    margin-left: 5vw;
-  }
+  // &:first-child {
+  //   margin-left: 5vw;
+  // }
 
-  &:last-child {
-    margin-right: 5vw;
-  }
+  // &:last-child {
+  //   margin-right: 5vw;
+  // }
 }

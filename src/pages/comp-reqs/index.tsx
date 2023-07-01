@@ -29,6 +29,7 @@ export interface Requirement {
   eligible: boolean;
   name: string;
   page: string;
+  icon: string;
   level?: number;
   type: RequirementType;
   // priority: number;
@@ -136,13 +137,17 @@ export default function Header(props: {match: {params: {user: string}}}) {
 
   function traverseSelected(
     reqMap: Dictionary<Requirement>,
+    includeRecommended = true,
     requirement = selectedRequirement as Requirement,
     seen = new Set<Requirement>()
   ) {
     seen.add(requirement);
     for (const {name, type, level} of [
       ...(requirement.achievements ?? []),
-      ...(requirement.quests ?? []), //.filter(q => q.required),
+      ...(quests =>
+        includeRecommended ? quests : quests.filter(q => q.required))(
+        requirement.quests ?? []
+      ),
       ...(requirement.skills ?? []),
     ]) {
       const n = type === 'skill' ? `${name}${level}` : name;
@@ -153,7 +158,7 @@ export default function Header(props: {match: {params: {user: string}}}) {
       if (seen.has(req)) {
         continue;
       }
-      traverseSelected(reqMap, req, seen);
+      traverseSelected(reqMap, includeRecommended, req, seen);
     }
     return seen;
   }

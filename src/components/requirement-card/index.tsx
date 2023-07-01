@@ -62,47 +62,44 @@ export default function RequirementCard({
         }}
       >
         <header>
-          <h3
-            style={{
-              color: priorityColor,
-            }}
+          <a
+            className="requirement"
+            href={`${page}`}
+            target="_blank"
+            rel="noopener noreferrer"
           >
-            {requirement.type === 'skill'
-              ? `${level} ${name[0].toUpperCase()}${name.substring(1)}`
-              : name}
-          </h3>
+            <img src={requirement.icon}></img>
+            <h3
+              style={{
+                color: priorityColor,
+              }}
+            >
+              {requirement.type === 'skill'
+                ? `${level} ${name[0].toUpperCase()}${name.substring(1)}`
+                : name}
+            </h3>
+          </a>
+          Completed:{' '}
+          <input
+            type="checkbox"
+            checked={requirement.complete}
+            onClick={_ => {
+              requirement.complete = !requirement.complete;
+              if (requirement.type === 'achievement') {
+                profile.achievements[name] = !profile.achievements[name];
+                updateProfile();
+              }
+              setUpdate(update + 1);
+            }}
+          ></input>
         </header>
         {/* <p>{JSON.stringify(requirement, null, 2)}</p> */}
         <section className="info" id={`${name}${level ?? ''}`}>
-          <div>
-            <a
-              className="requirement"
-              href={`${page}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              RuneScape Wiki
-            </a>
-            <input
-              type="checkbox"
-              checked={requirement.complete}
-              onClick={_ => {
-                requirement.complete = !requirement.complete;
-                if (requirement.type === 'achievement') {
-                  profile.achievements[name] = !profile.achievements[name];
-                  updateProfile();
-                }
-                setUpdate(update + 1);
-              }}
-            ></input>
-          </div>
-          <p>
-            M: {requirement.maxLevel || 0}, O: {requirement.order}
-          </p>
-          <section>
+          <section className="quests">
             Quests
             {requirement.quests
               // .filter(q => q.required)
+              .sort((a, b) => b.maxLevel - a.maxLevel)
               .map(quest => (
                 <a href={`#${quest.name}`}>
                   {quest.name},{' '}
@@ -117,24 +114,31 @@ export default function RequirementCard({
                 </a>
               ))}
           </section>
-          <section>
+          <section className="skills">
             Skills
-            {requirement.skills.map(skill => (
-              <div>
-                {skill.name} {skill.level},{' '}
-                {(profile.skills[skill.name]?.level || 0) >= (skill.level ?? 0)
-                  ? '✅'
-                  : '❌'}
-              </div>
-            ))}
+            {requirement.skills
+              .sort((a, b) => (b.level ?? 0) - (a.level ?? 0))
+              .map(skill => (
+                <div>
+                  <img src={skill.icon}></img>
+                  {skill.level} {skill.name},{' '}
+                  {(profile.skills[skill.name]?.level || 0) >=
+                  (skill.level ?? 0)
+                    ? '✅'
+                    : '❌'}
+                </div>
+              ))}
           </section>
-          <section>
+          <section className="achievements">
             Achievements
-            {requirement.achievements.map(achiev => (
-              <div>
-                {achiev.name}, {profile.achievements[achiev.name] ? '✅' : '❌'}
-              </div>
-            ))}
+            {requirement.achievements
+              .sort((a, b) => b.maxLevel - a.maxLevel)
+              .map(achiev => (
+                <div>
+                  {achiev.name},{' '}
+                  {profile.achievements[achiev.name] ? '✅' : '❌'}
+                </div>
+              ))}
           </section>
         </section>
         {requirement.type !== 'skill' ? (
